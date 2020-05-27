@@ -37,7 +37,7 @@ function showHelp
    echo
    echo "Usage:"
    echo "./moontextures.sh [ download moon heights"
-   echo "               1k 2k 4k 8k 16k cleanup rebuild ]"
+   echo "               1k 2k 4k 8k 16k cleanup ]"
    echo
    echo "* Append \"download\" to the command to force the download"
    echo "  process alltogether. Only makes sense if you have not already got"
@@ -78,7 +78,6 @@ done
 if [ -z $HEIGHTS ] ; then HEIGHTS="false" ; fi
 if [ -z $MOON ] ; then MOON="false" ; fi
 if [ -z $CLEANUP ] ; then CLEANUP="false" ; fi
-if [ -z $REBUILD ] ; then REBUILD="false" ; fi
 if [ -z $MOSAIC ] ; then MOSAIC="false" ; fi
 
 CHECKHEIGHTS=$HEIGHTS
@@ -513,14 +512,14 @@ function generateMoon
 	    if [[ ${LROC_P} == ${LROC_N} ]]; then
 		montage tmp/polarcap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
 			tmp/uncap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			-tile 1x2 -geometry +0+0 \
+			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
 			tmp/moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 	    fi
 
 	    if [[ ${LROC_P} == ${LROC_S} ]]; then
 		montage tmp/uncap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
 			tmp/polarcap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			-tile 1x2 -geometry +0+0 \
+			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
 			tmp/moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 	    fi
 	    
@@ -848,13 +847,13 @@ function generateMoonHeights
 	    if [[ ${LROC_P} == ${LROC_N} ]]; then
 		montage tmp/polarcap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
 			tmp/uncap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			-tile 1x2 -geometry +0+0 \
+			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
 			tmp/moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 	    fi
 	    if [[ ${LROC_P} == ${LROC_S} ]]; then
 		montage tmp/uncap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
 			tmp/polarcap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			-tile 1x2 -geometry +0+0 \
+			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
 			tmp/moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 	    fi
 	    	    	   
@@ -1117,23 +1116,25 @@ function generateMosaic
    echo "##############################################" | tee -a $LOGFILE_GENERAL
    echo | tee -a $LOGFILE_GENERAL
 
-   RES=16384
-   for r in $RESOLUTION
-   do
-     if [ $r -le $RES ]
-     then
-       RES=$r
-     fi
-   done
+
+   if [ -z $FORCE_BORDER_WIDTH ]; then
+       let "BORDER_WIDTH = $RESOLUTION_MAX / 128"
+   else
+       BORDER_WIDTH=$FORCE_BORDER_WIDTH
+   fi
+   let "IMAGE_BORDERLESS = $RESOLUTION_MAX - ( 2 * $BORDER_WIDTH )"
+   
+   RES=${IMAGE_BORDERLESS}
+
    let "WIDTH = 4 * $RES"
    let "HEIGHT = 2 * $RES"
-   echo "Lowest available resolution is: $RES" | tee -a $LOGFILE_GENERAL
+   echo "Mosaic generation at resolution: $RES" | tee -a $LOGFILE_GENERAL
 
    if [[ $HEIGHTS == "true" ]]
    then
      {
 	 montage tmp/moonheights_seamless_${RES}_N[1234].mpc tmp/moonheights_seamless_${RES}_S[1234].mpc \
-		 -geometry +0 -tile 4x2 output/${RES}/fullmoonheights.png
+		 -geometry +0 -tile 4x2 output/${RESOLUTION_MAX}/fullmoonheights.png
       
      }
    fi
@@ -1144,7 +1145,7 @@ function generateMosaic
    then
      {
 	 montage tmp/moon_seamless_${RES}_N[1234].mpc tmp/moon_seamless_${RES}_S[1234].mpc \
-		 -geometry +0 -tile 4x2 output/${RES}/fullmoon.png
+		 -geometry +0 -tile 4x2 output/${RESOLUTION_MAX}/fullmoon.png
      }
    fi
   }
@@ -1174,7 +1175,6 @@ echo "--------------------------------------------------------------" | tee -a $
 echo | tee -a $LOGFILE_GENERAL
 
 
-if [[ $REBUILD == "true" ]] ; then rebuild ; fi
 if [[ $DOWNLOAD == "true" ]] ; then downloadImages ; fi
 if [[ $HEIGHTS == "true" ]]; then generateMoonHeights; fi
 if [[ $MOON == "true" ]]; then generateMoon; fi
