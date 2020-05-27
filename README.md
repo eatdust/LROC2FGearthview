@@ -10,7 +10,7 @@ for the Lunar Reconnaissance Orbiter (Camera) satellite from
 NASA/GSFC/Arizona State University.
 
 Checkout the
-[[**wikipedia**](https://en.wikipedia.org/wiki/Lunar_Reconnaissance_Orbiter)
+[**wikipedia**](https://en.wikipedia.org/wiki/Lunar_Reconnaissance_Orbiter)
 webpage or the [**LROC**](http://lroc.sese.asu.edu/) page for more
 details and direct access to the data.
 
