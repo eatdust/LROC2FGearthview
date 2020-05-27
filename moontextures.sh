@@ -75,13 +75,11 @@ do
   if [ $ARG == "cleanup" ] ; then CLEANUP="true" ; fi
   if [ $ARG == "mosaic" ] ; then MOSAIC="true" ; fi
 done
-if [ -z $DOWNLOAD ] ; then DOWNLOAD="true" ; fi
 if [ -z $HEIGHTS ] ; then HEIGHTS="false" ; fi
 if [ -z $MOON ] ; then MOON="false" ; fi
 if [ -z $CLEANUP ] ; then CLEANUP="false" ; fi
 if [ -z $REBUILD ] ; then REBUILD="false" ; fi
-if [ -z $BUILDCHECKS ] ; then BUILDCHECKS="false" ; fi
-if [ -z $MONTH ] ; then MONTH="08" ; fi
+if [ -z $MOSAIC ] ; then MOSAIC="false" ; fi
 
 CHECKHEIGHTS=$HEIGHTS
 CHECKMOON=$MOON
