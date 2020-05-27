@@ -80,9 +80,6 @@ if [ -z $MOON ] ; then MOON="false" ; fi
 if [ -z $CLEANUP ] ; then CLEANUP="false" ; fi
 if [ -z $MOSAIC ] ; then MOSAIC="false" ; fi
 
-CHECKHEIGHTS=$HEIGHTS
-CHECKMOON=$MOON
-
 
 ########################
 ## Set some variables ##
@@ -107,7 +104,7 @@ MEM_LIMIT=32GiB
 #faster
 RESIZE_METHOD="-resize"
 STRETCH_METHOD="-resize"
-FORCE_BORDER_WIDTH=0
+#FORCE_BORDER_WIDTH=0
 
 
 mkdir -p tmp
@@ -120,11 +117,10 @@ LOGFILE_GENERAL="logs/${TIME}.log"
 LOGFILE_TIME="logs/${TIME}.time.log"
 
 #command line gimp plugin from https://github.com/eatdust/normalmap
-#higher filters (5x5) create too sharp features (no rescaling, I
-#assume earthview do its own normalization). We also put in the alpha
+#higher filters (5x5) create sharper features. We also put in the alpha
 #channel the inverse_height
 NORMALBIN="normalmap"
-NORMALOPTS="-s 1 -f FILTER_PREWITT_3x3 -a ALPHA_INVERSE_HEIGHT"
+NORMALOPTS="-s 1 -f FILTER_PREWITT_5x5 -a ALPHA_INVERSE_HEIGHT"
 
 
 #we need gdal to reproject polar stereographics to equirectangular
@@ -334,7 +330,9 @@ function LROC2FG
   }
 
 function LROC2TE
-  {
+#59.995797
+#89.997675
+{
    if [ $1 == "N2250" ] ; then GDAL_TE="-te -180 60 -90 90" ; fi
    if [ $1 == "N3150" ] ; then GDAL_TE="-te -90 60 0 90" ; fi
    if [ $1 == "N0450" ] ; then GDAL_TE="-te 0 60 90 90" ; fi
@@ -500,31 +498,37 @@ function generateMoon
 
 	    $GDALWARPBIN ${GDALWARPOPTS} ${GDAL_TE} \
 			 input/WAC_${IDMOON_P}${LROC_P}_${RESMOON}.TIF \
-			 tmp/polarcap_moon_${DEST}.tif
-
+			 tmp/polarcap_moon_${DEST}.tif	    
+	    
 	    convert -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
-		    tmp/polarcap_moon_${DEST}.tif ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
+		    tmp/polarcap_moon_${DEST}.tif ${RESIZE_METHOD} ${IMAGE_BORDERLESS} \
 	            tmp/polarcap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
-
+	    
 	    convert -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
-		    input/WAC_${IDMOON_E}${t}_${RESMOON}.TIF ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
+		    input/WAC_${IDMOON_E}${t}_${RESMOON}.TIF ${RESIZE_METHOD} ${IMAGE_BORDERLESS} \
 	            tmp/uncap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 
 	    if [[ ${LROC_P} == ${LROC_N} ]]; then
-		montage tmp/polarcap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
+		montage -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
+			tmp/polarcap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
 			tmp/uncap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
-			tmp/moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
+			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS} \
+			tmp/glued_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 	    fi
 
 	    if [[ ${LROC_P} == ${LROC_S} ]]; then
-		montage tmp/uncap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
+		montage -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
+			tmp/uncap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
 			tmp/polarcap_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
-			tmp/moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
+			-tile 1x2 -geometry +0+0  ${RESIZE_METHOD} ${IMAGE_BORDERLESS} \
+			tmp/glued_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 	    fi
 	    
-		
+	    convert  -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
+		     tmp/glued_moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
+		     ${STRETCH_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS}\! \
+		     tmp/moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
+	    
             set +x
         else
           echo "==> Timesaver:) Using existing file: tmp/moon_seamless_${TIMESAVER_SIZE}_${DEST}.mpc -> tmp/moon_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc" | tee -a $LOGFILE_GENERAL
@@ -835,29 +839,38 @@ function generateMoonHeights
 
 	    $GDALWARPBIN ${GDALWARPOPTS} ${GDAL_TE} \
 			 input/WAC_${IDHEIGHTS_P}${LROC_P}_${RESHEIGHTS}.TIF \
-			 tmp/polarcap_moonheights_${DEST}.tif
-
+			 tmp/polarcap_moonheights_${DEST}.tif	    
+	    	    
 	    convert -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
-		    tmp/polarcap_moonheights_${DEST}.tif ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
+		    tmp/polarcap_moonheights_${DEST}.tif ${RESIZE_METHOD} ${IMAGE_BORDERLESS} \
 	            tmp/polarcap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
-
+	    
 	    convert -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
-		    input/WAC_${IDHEIGHTS_E}${t}_${RESHEIGHTS}.TIF ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
+		    input/WAC_${IDHEIGHTS_E}${t}_${RESHEIGHTS}.TIF ${RESIZE_METHOD} ${IMAGE_BORDERLESS} \
 	            tmp/uncap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 
 	    if [[ ${LROC_P} == ${LROC_N} ]]; then
-		montage tmp/polarcap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			tmp/uncap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
-			tmp/moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
-	    fi
-	    if [[ ${LROC_P} == ${LROC_S} ]]; then
-		montage tmp/uncap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
+		montage -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
 			tmp/polarcap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
-			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS} \
-			tmp/moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
+			tmp/uncap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
+			-tile 1x2 -geometry +0+0 ${RESIZE_METHOD} ${IMAGE_BORDERLESS} \
+			tmp/glued_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
 	    fi
-	    	    	   
+
+	    if [[ ${LROC_P} == ${LROC_S} ]]; then
+		montage -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
+			tmp/uncap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
+			tmp/polarcap_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
+			-tile 1x2 -geometry +0+0  ${RESIZE_METHOD} ${IMAGE_BORDERLESS} \
+			tmp/glued_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
+	    fi
+	    
+	    convert  -monitor -limit memory ${MEM_LIMIT} -limit map ${MEM_LIMIT} \
+		     tmp/glued_moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc \
+		     ${STRETCH_METHOD} ${IMAGE_BORDERLESS}x${IMAGE_BORDERLESS}\! \
+		     tmp/moonheights_seamless_${IMAGE_BORDERLESS}_${DEST}.mpc
+	    
+	    
 	    
             set +x
 	    
@@ -882,38 +895,38 @@ function generateMoonHeights
    echo "input/gebco_08_rev_elev_[A-D][12]_grey_geo.tif -> tmp/moonheights_seamless_${IMAGE_BORDERLESS}_[NS][1-4].mpc" >> $LOGFILE_TIME
    getProcessingTime
 
-   echo | tee -a $LOGFILE_GENERAL
-   echo "#####################################" | tee -a $LOGFILE_GENERAL
-   echo "## Put a ${BORDER_WIDTH}px border to each side ##" | tee -a $LOGFILE_GENERAL
-   echo "#####################################" | tee -a $LOGFILE_GENERAL
-   for t in $TILES
-   do
-     if [ ! -s "tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.mpc" ]
-     then
-       # set -x
-       convert \
-         -monitor \
-         tmp/moonheights_seamless_${IMAGE_BORDERLESS}_${t}.mpc \
-         -bordercolor none \
-         -border ${BORDER_WIDTH} \
-         tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.mpc
-       set +x
-       echo
-     fi
-     if [ ! -s "tmp/moonheights_seams_${RESOLUTION_MAX}_${t}.mpc" ]
-     then
-       # set -x
-       cp tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.mpc tmp/moonheights_seams_${RESOLUTION_MAX}_${t}.mpc
-       cp tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.cache tmp/moonheights_seams_${RESOLUTION_MAX}_${t}.cache
-       set +x
-     else echo "=> Skipping existing file: tmp/moonheights_seams_${RESOLUTION_MAX}_${t}.mpc" | tee -a $LOGFILE_GENERAL | tee -a $LOGFILE_TIME
-     fi
-   done
-   # 11m, 24s
-   echo "-> tmp/moonheights_seams_${RESOLUTION_MAX}_[NS][1-4]_emptyBorder.mpc -> tmp/moonheights_seams_${RESOLUTION_MAX}_[NS][1-4].mpc" >> $LOGFILE_TIME
-   getProcessingTime
-
    if [[ ${BORDER_WIDTH} -ge 1 ]]; then
+   
+       echo | tee -a $LOGFILE_GENERAL
+       echo "#####################################" | tee -a $LOGFILE_GENERAL
+       echo "## Put a ${BORDER_WIDTH}px border to each side ##" | tee -a $LOGFILE_GENERAL
+       echo "#####################################" | tee -a $LOGFILE_GENERAL
+       for t in $TILES
+       do
+	   if [ ! -s "tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.mpc" ]
+	   then
+	       # set -x
+	       convert \
+		   -monitor \
+		   tmp/moonheights_seamless_${IMAGE_BORDERLESS}_${t}.mpc \
+		   -bordercolor none \
+		   -border ${BORDER_WIDTH} \
+		   tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.mpc
+	       set +x
+	       echo
+	   fi
+	   if [ ! -s "tmp/moonheights_seams_${RESOLUTION_MAX}_${t}.mpc" ]
+	   then
+	       # set -x
+	       cp tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.mpc tmp/moonheights_seams_${RESOLUTION_MAX}_${t}.mpc
+	       cp tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.cache tmp/moonheights_seams_${RESOLUTION_MAX}_${t}.cache
+	       set +x
+	   else echo "=> Skipping existing file: tmp/moonheights_seams_${RESOLUTION_MAX}_${t}.mpc" | tee -a $LOGFILE_GENERAL | tee -a $LOGFILE_TIME
+	   fi
+       done
+       # 11m, 24s
+       echo "-> tmp/moonheights_seams_${RESOLUTION_MAX}_[NS][1-4]_emptyBorder.mpc -> tmp/moonheights_seams_${RESOLUTION_MAX}_[NS][1-4].mpc" >> $LOGFILE_TIME
+       getProcessingTime
        
        
        echo | tee -a $LOGFILE_GENERAL
@@ -1142,8 +1155,6 @@ function generateMosaic
      }
    fi
 
-
-
    if [[ $MOON == "true" ]]
    then
      {
@@ -1179,8 +1190,8 @@ echo | tee -a $LOGFILE_GENERAL
 
 
 if [[ $DOWNLOAD == "true" ]] ; then downloadImages ; fi
-if [[ $HEIGHTS == "true" ]]; then generateMoonHeights; fi
-if [[ $MOON == "true" ]]; then generateMoon; fi
+if [[ $HEIGHTS == "true" ]] ; then generateMoonHeights ; fi
+if [[ $MOON == "true" ]] ; then generateMoon ; fi
 if [[ $MOSAIC == "true" ]] ; then generateMosaic ; fi
 if [[ $CLEANUP == "true" ]] ; then cleanUp ; fi
 
