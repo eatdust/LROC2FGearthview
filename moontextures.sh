@@ -107,7 +107,7 @@ MEM_LIMIT=32GiB
 #faster
 RESIZE_METHOD="-resize"
 STRETCH_METHOD="-resize"
-#FORCE_BORDER_WIDTH=0
+FORCE_BORDER_WIDTH=0
 
 
 mkdir -p tmp
@@ -165,12 +165,13 @@ lroc.sese.asu.edu/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/EXTRAS/BROWSE/WAC_GLD10
 lroc.sese.asu.edu/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/EXTRAS/BROWSE/WAC_GLD100/WAC_GLD100_E300S1350_256P.TIF
 lroc.sese.asu.edu/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/EXTRAS/BROWSE/WAC_GLD100/WAC_GLD100_P900S0000_256P.TIF"
 
-
+#contaminated by shadows :(
 URLS_MOON=${URLS_MOON_100M}
 IDMOON_E="GLOBAL_E300"
 IDMOON_P="GLOBAL_P900"
 RESMOON="100M"
 
+#they miss the polar caps
 #URLS_MOON=${URLS_MOON_304P}
 #IDMOON_E="EMP_643NM_E300"
 #IDMOON_P="EMP_643NM_P900"
@@ -1135,7 +1136,9 @@ function generateMosaic
      {
 	 montage tmp/moonheights_seamless_${RES}_N[1234].mpc tmp/moonheights_seamless_${RES}_S[1234].mpc \
 		 -geometry +0 -tile 4x2 output/${RESOLUTION_MAX}/fullmoonheights.png
-      
+
+	 $NORMALBIN $NORMALOPTS output/${RESOLUTION_MAX}/fullmoonheights.png output/${RESOLUTION_MAX}/normalmap_fullmoon.png
+	 
      }
    fi
 
