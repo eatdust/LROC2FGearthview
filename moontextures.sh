@@ -95,6 +95,10 @@ DL_METHOD="WGET"
 #gives a huge speed-up
 MEM_LIMIT=32GiB
 
+#border width
+#FORCE_BORDER_WIDTH=0
+BORDER_WIDTH_FACTOR=256
+
 #more info here: https://imagemagick.org/Usage/filter/nicolas/
 #very long
 #RESIZE_METHOD="-filter LanczosSharp +remap -distort Resize"
@@ -104,7 +108,7 @@ MEM_LIMIT=32GiB
 #faster
 RESIZE_METHOD="-resize"
 STRETCH_METHOD="-resize"
-#FORCE_BORDER_WIDTH=0
+
 
 
 mkdir -p tmp
@@ -117,10 +121,10 @@ LOGFILE_GENERAL="logs/${TIME}.log"
 LOGFILE_TIME="logs/${TIME}.time.log"
 
 #command line gimp plugin from https://github.com/eatdust/normalmap
-#higher filters (5x5) create sharper features. We also put in the alpha
+#higher filters (5x5) create to sharp features. We also put in the alpha
 #channel the inverse_height
 NORMALBIN="normalmap"
-NORMALOPTS="-s 1 -f FILTER_PREWITT_5x5 -a ALPHA_INVERSE_HEIGHT"
+NORMALOPTS="-s 1 -f FILTER_PREWITT_3x3 -a ALPHA_INVERSE_HEIGHT"
 
 
 #we need gdal to reproject polar stereographics to equirectangular
@@ -443,7 +447,7 @@ function generateMoon
    echo | tee -a $LOGFILE_GENERAL
 #this settings are local to earch generateXXXX
    if [ -z $FORCE_BORDER_WIDTH ]; then
-       let "BORDER_WIDTH = $RESOLUTION_MAX / 128"
+       let "BORDER_WIDTH = $RESOLUTION_MAX / $BORDER_WIDTH_FACTOR"
    else
        BORDER_WIDTH=$FORCE_BORDER_WIDTH
    fi
@@ -481,7 +485,7 @@ function generateMoon
           then
             continue
           fi
-          let "IMAGE_SIZE = $r - ( 2 * ( $r / 128 ) )"
+          let "IMAGE_SIZE = $r - ( 2 * ( $r / $BORDER_WIDTH_FACTOR ) )"
           let "I_W = $IMAGE_SIZE * 4"
           let "I_H = $IMAGE_SIZE * 2"
           if [ -s tmp/moon_seamless_${IMAGE_SIZE}_${DEST}.mpc ]
@@ -789,7 +793,7 @@ function generateMoonHeights
    echo "################################" | tee -a $LOGFILE_GENERAL
    echo | tee -a $LOGFILE_GENERAL
    if [ -z $FORCE_BORDER_WIDTH ]; then
-       let "BORDER_WIDTH = $RESOLUTION_MAX / 128"
+       let "BORDER_WIDTH = $RESOLUTION_MAX / $BORDER_WIDTH_FACTOR"
    else
        BORDER_WIDTH=$FORCE_BORDER_WIDTH
    fi
@@ -822,7 +826,7 @@ function generateMoonHeights
           then
             continue
           fi
-          let "IMAGE_SIZE = $r - ( 2 * ( $r / 128 ) )"
+          let "IMAGE_SIZE = $r - ( 2 * ( $r / $BORDER_WIDTH_FACTOR ) )"
           let "I_W = $IMAGE_SIZE * 4"
           let "I_H = $IMAGE_SIZE * 2"
           if [ -s tmp/moonheights_seamless_${IMAGE_SIZE}_${DEST}.mpc ]
@@ -1132,7 +1136,7 @@ function generateMosaic
 
 
    if [ -z $FORCE_BORDER_WIDTH ]; then
-       let "BORDER_WIDTH = $RESOLUTION_MAX / 128"
+       let "BORDER_WIDTH = $RESOLUTION_MAX / $BORDER_WIDTH_FACTOR"
    else
        BORDER_WIDTH=$FORCE_BORDER_WIDTH
    fi

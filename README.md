@@ -5,9 +5,9 @@ Moon textures generator for FlightGear's Earthview
 This code allows you to create Moon textures, RGB [**normal
 map**](https://en.wikipedia.org/wiki/Normal_mapping) and
 [**heightmaps**](https://en.wikipedia.org/wiki/Heightmap) from the
-fantastic, public domain and nearly perfect LROC images. LRO(C) stands
-for the Lunar Reconnaissance Orbiter (Camera) satellite from
-NASA/GSFC/Arizona State University.
+fantastic public domain LROC images. LRO(C) stands for the Lunar
+Reconnaissance Orbiter (Camera) satellite from NASA/GSFC/Arizona State
+University.
 
 Checkout the
 [**wikipedia**](https://en.wikipedia.org/wiki/Lunar_Reconnaissance_Orbiter)
