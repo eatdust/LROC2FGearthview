@@ -27,7 +27,7 @@ Then launch the bash script:
 
     $ ./moontextures moon heights 8k
 
-The script is adapted from the one of Chris which generate Earth
+The script is adapted from the one by Chris Blues which generate Earth
 textures, more info can be found at
 [**NASA2FGearthview**](https://github.com/chris-blues/Nasa2FGearthview)
 
