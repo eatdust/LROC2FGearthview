@@ -95,9 +95,10 @@ DL_METHOD="WGET"
 #gives a huge speed-up
 MEM_LIMIT=32GiB
 
-#border width
+#border width (should match the ac3 file, don't change unless you know
+#what you're doing)
 #FORCE_BORDER_WIDTH=0
-BORDER_WIDTH_FACTOR=256
+BORDER_WIDTH_FACTOR=128
 
 #more info here: https://imagemagick.org/Usage/filter/nicolas/
 #very long
