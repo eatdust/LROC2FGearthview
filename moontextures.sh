@@ -24,8 +24,14 @@
 # - support for topographic and relief shading map to create moon and
 # - normalmap textures
 #
+# v0.2:
+#- fix seams reappearing with normalmapping. Replace all
+#  borders of a given tile by the corresponding part of its
+#  neighbooring tiles. Each loaded tiles now contain BORDER_WIDTH extra
+#  pixels of other tiles: you can strech them by this thus :) 
 
-VERSION="v0.1"
+
+VERSION="v0.2"
 
 # make sure the script halts on error
 set -e
@@ -322,6 +328,68 @@ function IM2FG
    if [ $1 == "7" ] ; then DEST="S4" ; fi
   }
 
+
+function TILESAROUND
+  {
+      if [ $1 == "N1" ] ; then
+	  if [ $2 == "left" ] ;  then TILEB="N4" ; fi
+	  if [ $2 == "bottom" ] ; then TILEB="S1" ; fi
+	  if [ $2 == "right" ] ; then TILEB="N2" ; fi
+	  if [ $2 == "top" ] ; then TILEB="N1" ; fi
+      fi
+      if [ $1 == "N2" ] ; then
+	  if [ $2 == "left" ] ;  then TILEB="N1" ; fi
+	  if [ $2 == "bottom" ] ; then TILEB="S2" ; fi
+	  if [ $2 == "right" ] ; then TILEB="N3" ; fi
+	  if [ $2 == "top" ] ; then TILEB="N2" ; fi
+      fi
+      if [ $1 == "N3" ] ; then
+	  if [ $2 == "left" ] ;  then TILEB="N2" ; fi
+	  if [ $2 == "bottom" ] ; then TILEB="S3" ; fi
+	  if [ $2 == "right" ] ; then TILEB="N4" ; fi
+	  if [ $2 == "top" ] ; then TILEB="N3" ; fi
+      fi
+      if [ $1 == "N4" ] ; then
+	  if [ $2 == "left" ] ;  then TILEB="N3" ; fi
+	  if [ $2 == "bottom" ] ; then TILEB="S4" ; fi
+	  if [ $2 == "right" ] ; then TILEB="N1" ; fi
+	  if [ $2 == "top" ] ; then TILEB="N4" ; fi
+      fi
+      if [ $1 == "S1" ] ; then
+	  if [ $2 == "top" ] ; then TILEB="N1" ; fi
+	  if [ $2 == "right" ] ; then TILEB="S2" ; fi
+	  if [ $2 == "left" ] ;  then TILEB="S4" ; fi
+	  if [ $2 == "bottom" ] ; then TILEB="S1" ; fi
+      fi
+      if [ $1 == "S2" ] ; then
+	  if [ $2 == "top" ] ; then TILEB="N2" ; fi
+	  if [ $2 == "right" ] ; then TILEB="S3" ; fi
+	  if [ $2 == "left" ] ; then TILEB="S1" ; fi
+	  if [ $2 == "bottom" ] ; then TILEB="S2" ; fi
+      fi
+      if [ $1 == "S3" ] ; then
+	  if [ $2 == "top" ] ; then TILEB="N3" ; fi
+	  if [ $2 == "right" ] ; then TILEB="S4" ; fi
+	  if [ $2 == "left" ] ; then TILEB="S2" ; fi
+	  if [ $2 == "bottom" ] ; then TILEB="S3" ; fi
+      fi
+      if [ $1 == "S4" ] ; then
+	  if [ $2 == "top" ] ; then TILEB="N4" ; fi
+	  if [ $2 == "right" ] ; then TILEB="S1" ; fi
+	  if [ $2 == "left" ] ; then TILEB="S3" ; fi
+	  if [ $2 == "bottom" ] ; then TILEB="S4" ; fi
+      fi
+  }
+
+function B2B
+  {  
+      if [ $1 == "top" ] ; then ANTIB="bottom" ; fi
+      if [ $1 == "right" ] ; then ANTIB="left" ; fi
+      if [ $1 == "bottom" ] ; then ANTIB="top" ; fi
+      if [ $1 == "left" ] ; then ANTIB="right" ; fi
+      
+  }
+      
 function LROC2FG
   {
    if [ $1 == "N2250" ] ; then DEST="N1" ; fi
@@ -348,17 +416,17 @@ function LROC2TE
    if [ $1 == "S1350" ] ; then GDAL_TE="-te 90 -90 180 -60" ; fi
   }
 
-  function LROC2P
-  {
-   if [ $1 == "N2250" ] ; then LROC_P=$LROC_N ; fi
-   if [ $1 == "N3150" ] ; then LROC_P=$LROC_N ; fi
-   if [ $1 == "N0450" ] ; then LROC_P=$LROC_N ; fi
-   if [ $1 == "N1350" ] ; then LROC_P=$LROC_N ; fi
-   if [ $1 == "S2250" ] ; then LROC_P=$LROC_S ; fi
-   if [ $1 == "S3150" ] ; then LROC_P=$LROC_S ; fi
-   if [ $1 == "S0450" ] ; then LROC_P=$LROC_S ; fi
-   if [ $1 == "S1350" ] ; then LROC_P=$LROC_S ; fi
-   }
+function LROC2P
+{
+    if [ $1 == "N2250" ] ; then LROC_P=$LROC_N ; fi
+    if [ $1 == "N3150" ] ; then LROC_P=$LROC_N ; fi
+    if [ $1 == "N0450" ] ; then LROC_P=$LROC_N ; fi
+    if [ $1 == "N1350" ] ; then LROC_P=$LROC_N ; fi
+    if [ $1 == "S2250" ] ; then LROC_P=$LROC_S ; fi
+    if [ $1 == "S3150" ] ; then LROC_P=$LROC_S ; fi
+    if [ $1 == "S0450" ] ; then LROC_P=$LROC_S ; fi
+    if [ $1 == "S1350" ] ; then LROC_P=$LROC_S ; fi
+}
 
 
   
@@ -454,7 +522,7 @@ function generateMoon
    fi
    let "IMAGE_BORDERLESS = $RESOLUTION_MAX - ( 2 * $BORDER_WIDTH )"
    let "IMAGE_WITH_BORDER_POS = $RESOLUTION_MAX - $BORDER_WIDTH"
-   let "IMAGE_WITH_BORDER = $RESOLUTION_MAX - $BORDER_WIDTH - 1"
+   let "IMAGE_WITH_BORDER =  $RESOLUTION_MAX - $BORDER_WIDTH - $BORDER_WIDTH"
    
    mkdir -p tmp
    mkdir -p output
@@ -590,21 +658,17 @@ function generateMoon
 
        echo | tee -a $LOGFILE_GENERAL
        echo "######################################################" | tee -a $LOGFILE_GENERAL
-       echo "## crop borderline pixels and propagate to the edge ##" | tee -a $LOGFILE_GENERAL
+       echo "##   crop borderline pixels from neighbour tiles    ##" | tee -a $LOGFILE_GENERAL
        echo "######################################################" | tee -a $LOGFILE_GENERAL
 
-       CROP_TOP="${IMAGE_BORDERLESS}x1+${BORDER_WIDTH}+${BORDER_WIDTH}"
-       CROP_RIGHT="1x${IMAGE_BORDERLESS}+${IMAGE_WITH_BORDER}+${BORDER_WIDTH}"
-       CROP_BOTTOM="${IMAGE_BORDERLESS}x1+${BORDER_WIDTH}+${IMAGE_WITH_BORDER}"
-       CROP_LEFT="1x${IMAGE_BORDERLESS}+${BORDER_WIDTH}+${BORDER_WIDTH}"
+       CROP_TOP="${IMAGE_BORDERLESS}x${BORDER_WIDTH}+${BORDER_WIDTH}+${BORDER_WIDTH}"
+       CROP_RIGHT="${BORDER_WIDTH}x${IMAGE_BORDERLESS}+${IMAGE_WITH_BORDER}+${BORDER_WIDTH}"
+       CROP_BOTTOM="${IMAGE_BORDERLESS}x${BORDER_WIDTH}+${BORDER_WIDTH}+${IMAGE_WITH_BORDER}"
+       CROP_LEFT="${BORDER_WIDTH}x${IMAGE_BORDERLESS}+${BORDER_WIDTH}+${BORDER_WIDTH}"
        CROP_TOPLEFT="1x1+${BORDER_WIDTH}+${BORDER_WIDTH}"
        CROP_TOPRIGHT="1x1+${IMAGE_WITH_BORDER}+${BORDER_WIDTH}"
        CROP_BOTTOMRIGHT="1x1+${IMAGE_WITH_BORDER}+${IMAGE_WITH_BORDER}"
        CROP_BOTTOMLEFT="1x1+${BORDER_WIDTH}+${IMAGE_WITH_BORDER}"
-
-       ## HORIZ meaning a horizontal bar, like the one on top
-       HORIZ_RESIZE="${IMAGE_BORDERLESS}x${BORDER_WIDTH}"
-       VERT_RESIZE="${BORDER_WIDTH}x${IMAGE_BORDERLESS}"
 
        POS_TOP="+${BORDER_WIDTH}+0"
        POS_RIGHT="+${IMAGE_WITH_BORDER_POS}+${BORDER_WIDTH}"
@@ -618,10 +682,20 @@ function generateMoon
 	       for b in $BORDERS
 	       do
 		   {
+		       TILESAROUND $t $b
+		       B2B $b
+
+		       if [ $TILEB == $t ]
+		       then
+			   fromb=$b
+		       else
+			   fromb=$ANTIB
+		       fi
+
+
+#currently modified tile		      
 		       if [ $b == "top" ]
 		       then
-			   CROP=$CROP_TOP
-			   RESIZE=$HORIZ_RESIZE
 			   POSITION=$POS_TOP
 			   CROPCORNER=$CROP_TOPRIGHT
 			   CORNER_POS="+${IMAGE_WITH_BORDER_POS}+0"
@@ -629,8 +703,6 @@ function generateMoon
 		       fi
 		       if [ $b == "right" ]
 		       then
-			   CROP=$CROP_RIGHT
-			   RESIZE=$VERT_RESIZE
 			   POSITION=$POS_RIGHT
 			   CROPCORNER=$CROP_BOTTOMRIGHT
 			   CORNER_POS="+${IMAGE_WITH_BORDER_POS}+${IMAGE_WITH_BORDER_POS}"
@@ -638,8 +710,6 @@ function generateMoon
 		       fi
 		       if [ $b == "bottom" ]
 		       then
-			   CROP=$CROP_BOTTOM
-			   RESIZE=$HORIZ_RESIZE
 			   POSITION=$POS_BOTTOM
 			   CROPCORNER=$CROP_BOTTOMLEFT
 			   CORNER_POS="+0+${IMAGE_WITH_BORDER_POS}"
@@ -647,20 +717,36 @@ function generateMoon
 		       fi
 		       if [ $b == "left" ]
 		       then
-			   CROP=$CROP_LEFT
-			   RESIZE=$VERT_RESIZE
 			   POSITION=$POS_LEFT
 			   CROPCORNER=$CROP_TOPLEFT
 			   CORNER_POS="+0+0"
 			   CORNER_NAME="topLeft"
 		       fi
+
+
+#take the borders from these		       
+		       if [ $fromb == "top" ]
+		       then
+			   CROP=$CROP_TOP
+		       fi
+		       if [ $fromb == "right" ]
+		       then
+			   CROP=$CROP_RIGHT
+		       fi
+		       if [ $fromb == "bottom" ]
+		       then
+			   CROP=$CROP_BOTTOM
+		       fi
+		       if [ $fromb == "left" ]
+		       then
+			   CROP=$CROP_LEFT
+		       fi
 		       echo
 		       # set -x
 		       convert \
 			   -monitor \
-			   tmp/moon_seams_${RESOLUTION_MAX}_${t}_emptyBorder.mpc \
+			   tmp/moon_seams_${RESOLUTION_MAX}_${TILEB}_emptyBorder.mpc \
 			   -crop $CROP \
-			   ${STRETCH_METHOD} $RESIZE\! \
 			   tmp/moon_${RESOLUTION_MAX}_${t}_seam_${b}.mpc
 		       convert \
 			   -monitor \
@@ -799,9 +885,8 @@ function generateMoonHeights
        BORDER_WIDTH=$FORCE_BORDER_WIDTH
    fi
    let "IMAGE_BORDERLESS = $RESOLUTION_MAX - ( 2 * $BORDER_WIDTH )"
-   let "IMAGE_WITH_BORDER = $RESOLUTION_MAX - $BORDER_WIDTH - 1"
+   let "IMAGE_WITH_BORDER =  $RESOLUTION_MAX - $BORDER_WIDTH - $BORDER_WIDTH"
    let "IMAGE_WITH_BORDER_POS = $RESOLUTION_MAX - $BORDER_WIDTH"
-   let "SIZE = 2 * $IMAGE_BORDERLESS"
 
    mkdir -p tmp
    mkdir -p output
@@ -932,25 +1017,20 @@ function generateMoonHeights
        # 11m, 24s
        echo "-> tmp/moonheights_seams_${RESOLUTION_MAX}_[NS][1-4]_emptyBorder.mpc -> tmp/moonheights_seams_${RESOLUTION_MAX}_[NS][1-4].mpc" >> $LOGFILE_TIME
        getProcessingTime
-       
-       
+
        echo | tee -a $LOGFILE_GENERAL
        echo "######################################################" | tee -a $LOGFILE_GENERAL
-       echo "## crop borderline pixels and propagate to the edge ##" | tee -a $LOGFILE_GENERAL
+       echo "##   crop borderline pixels from neighbour tiles    ##" | tee -a $LOGFILE_GENERAL
        echo "######################################################" | tee -a $LOGFILE_GENERAL
 
-       CROP_TOP="${IMAGE_BORDERLESS}x1+${BORDER_WIDTH}+${BORDER_WIDTH}"
-       CROP_RIGHT="1x${IMAGE_BORDERLESS}+${IMAGE_WITH_BORDER}+${BORDER_WIDTH}"
-       CROP_BOTTOM="${IMAGE_BORDERLESS}x1+${BORDER_WIDTH}+${IMAGE_WITH_BORDER}"
-       CROP_LEFT="1x${IMAGE_BORDERLESS}+${BORDER_WIDTH}+${BORDER_WIDTH}"
+       CROP_TOP="${IMAGE_BORDERLESS}x${BORDER_WIDTH}+${BORDER_WIDTH}+${BORDER_WIDTH}"
+       CROP_RIGHT="${BORDER_WIDTH}x${IMAGE_BORDERLESS}+${IMAGE_WITH_BORDER}+${BORDER_WIDTH}"
+       CROP_BOTTOM="${IMAGE_BORDERLESS}x${BORDER_WIDTH}+${BORDER_WIDTH}+${IMAGE_WITH_BORDER}"
+       CROP_LEFT="${BORDER_WIDTH}x${IMAGE_BORDERLESS}+${BORDER_WIDTH}+${BORDER_WIDTH}"
        CROP_TOPLEFT="1x1+${BORDER_WIDTH}+${BORDER_WIDTH}"
        CROP_TOPRIGHT="1x1+${IMAGE_WITH_BORDER}+${BORDER_WIDTH}"
        CROP_BOTTOMRIGHT="1x1+${IMAGE_WITH_BORDER}+${IMAGE_WITH_BORDER}"
        CROP_BOTTOMLEFT="1x1+${BORDER_WIDTH}+${IMAGE_WITH_BORDER}"
-
-       ## HORIZ meaning a horizontal bar, like the one on top
-       HORIZ_RESIZE="${IMAGE_BORDERLESS}x${BORDER_WIDTH}"
-       VERT_RESIZE="${BORDER_WIDTH}x${IMAGE_BORDERLESS}"
 
        POS_TOP="+${BORDER_WIDTH}+0"
        POS_RIGHT="+${IMAGE_WITH_BORDER_POS}+${BORDER_WIDTH}"
@@ -964,10 +1044,20 @@ function generateMoonHeights
 	       for b in $BORDERS
 	       do
 		   {
+		       TILESAROUND $t $b
+		       B2B $b
+
+		       if [ $TILEB == $t ]
+		       then
+			   fromb=$b
+		       else
+			   fromb=$ANTIB
+		       fi
+
+
+#currently modified tile		      
 		       if [ $b == "top" ]
 		       then
-			   CROP=$CROP_TOP
-			   RESIZE=$HORIZ_RESIZE
 			   POSITION=$POS_TOP
 			   CROPCORNER=$CROP_TOPRIGHT
 			   CORNER_POS="+${IMAGE_WITH_BORDER_POS}+0"
@@ -975,8 +1065,6 @@ function generateMoonHeights
 		       fi
 		       if [ $b == "right" ]
 		       then
-			   CROP=$CROP_RIGHT
-			   RESIZE=$VERT_RESIZE
 			   POSITION=$POS_RIGHT
 			   CROPCORNER=$CROP_BOTTOMRIGHT
 			   CORNER_POS="+${IMAGE_WITH_BORDER_POS}+${IMAGE_WITH_BORDER_POS}"
@@ -984,8 +1072,6 @@ function generateMoonHeights
 		       fi
 		       if [ $b == "bottom" ]
 		       then
-			   CROP=$CROP_BOTTOM
-			   RESIZE=$HORIZ_RESIZE
 			   POSITION=$POS_BOTTOM
 			   CROPCORNER=$CROP_BOTTOMLEFT
 			   CORNER_POS="+0+${IMAGE_WITH_BORDER_POS}"
@@ -993,20 +1079,36 @@ function generateMoonHeights
 		       fi
 		       if [ $b == "left" ]
 		       then
-			   CROP=$CROP_LEFT
-			   RESIZE=$VERT_RESIZE
 			   POSITION=$POS_LEFT
 			   CROPCORNER=$CROP_TOPLEFT
 			   CORNER_POS="+0+0"
 			   CORNER_NAME="topLeft"
 		       fi
+
+
+#take the borders from these		       
+		       if [ $fromb == "top" ]
+		       then
+			   CROP=$CROP_TOP
+		       fi
+		       if [ $fromb == "right" ]
+		       then
+			   CROP=$CROP_RIGHT
+		       fi
+		       if [ $fromb == "bottom" ]
+		       then
+			   CROP=$CROP_BOTTOM
+		       fi
+		       if [ $fromb == "left" ]
+		       then
+			   CROP=$CROP_LEFT
+		       fi
 		       echo
 		       # set -x
 		       convert \
 			   -monitor \
-			   tmp/moonheights_seams_${RESOLUTION_MAX}_${t}_emptyBorder.mpc \
+			   tmp/moonheights_seams_${RESOLUTION_MAX}_${TILEB}_emptyBorder.mpc \
 			   -crop $CROP \
-			   ${STRETCH_METHOD} $RESIZE\! \
 			   tmp/moonheights_${RESOLUTION_MAX}_${t}_seam_${b}.mpc
 		       convert \
 			   -monitor \
@@ -1046,6 +1148,7 @@ function generateMoonHeights
        # 37m, 6s
        echo "-> tmp/moonheights_seams_${RESOLUTION_MAX}_[NS][1-4].mpc -> tmp/moonheights_${RESOLUTION_MAX}_done_[NS][1-4].mpc" >> $LOGFILE_TIME
        getProcessingTime
+
    else
        for t in $TILES
        do
@@ -1205,7 +1308,7 @@ if [[ $CLEANUP == "true" ]] ; then cleanUp ; fi
 
 
 echo | tee -a $LOGFILE_GENERAL
-echo "convert.sh has finished." | tee -a $LOGFILE_GENERAL
+echo "moontextures.sh has finished." | tee -a $LOGFILE_GENERAL
 echo | tee -a $LOGFILE_GENERAL
 echo "You will find the textures in \"output\" in your requested"
 echo "resolution. Copy these to \$FGDATA/Models/Astro/*"
