@@ -32,9 +32,12 @@ textures, more info can be found at
 [**NASA2FGearthview**](https://github.com/chris-blues/Nasa2FGearthview)
 
 As an illustrative example, here the FlightGear's UFO above [**Mare
-Orientale**](https://en.wikipedia.org/wiki/Mare_Orientale).
+Orientale**](https://en.wikipedia.org/wiki/Mare_Orientale). The GLSL
+shaders are provided in the
+[**moonshaders**](https://github.com/eatdust/moonshaders) repository.
 
 ![orientale](/docs/orientale.png?raw=true)
+
 
 
 Credits
