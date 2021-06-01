@@ -31,6 +31,11 @@ The script is adapted from the one by Chris Blues which generate Earth
 textures, more info can be found at
 [**NASA2FGearthview**](https://github.com/chris-blues/Nasa2FGearthview)
 
+As an illustrative example, here the FlightGear's UFO above [**Mare
+Orientale**](https://en.wikipedia.org/wiki/Mare_Orientale).
+
+![orientale](/docs/orientale.png?raw=true)
+
 
 Credits
 ---
@@ -38,6 +43,11 @@ Credits
 * Chris_Blues (https://github.com/chris-blues/Nasa2FGearthview)
 
 * LROC images, NASA/GSFC/Arizona State (http://lroc.sese.asu.edu/about/terms)
+
+Videos
+---
+
+* Check out the FlightGear's forum (https://forum.flightgear.org/viewtopic.php?f=19&t=37534)
 
 License
 ---
